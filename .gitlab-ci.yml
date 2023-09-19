@@ -1,0 +1,73 @@
+stages:
+  - build
+  - style
+  - tests
+  - deploy
+  - notify
+
+build-code:
+  stage: build
+  script:
+    - cd src/
+    - make s21_cat
+    - make s21_grep
+  artifacts:
+    paths:
+      - src/arst
+    expire_in: 30 days
+
+# part3
+check-code-style:
+  stage: style
+  script:
+    - cd src/
+    - make check
+
+# part4
+check-tests:
+  stage: tests
+  script:
+    - cd src/
+    - make tests
+
+# part 6
+notify_error_test:
+  stage: tests
+  when: on_failure
+  script:
+    - cd src/
+    - bash run_message.sh "[FAIL]" "CI STATUS"
+
+notify_ok_test:
+  stage: tests
+  when: on_success
+  script:
+    - cd src/
+    - bash run_message.sh "[OK]" "CI STATUS"
+
+# part 5
+copy-files:
+  stage: deploy
+  when: manual
+  script:
+    - cd src/
+    - bash run.sh
+
+# part 6
+notify_error_deploy:
+  stage: notify
+  when: on_failure 
+  needs:
+    - job: copy-files
+  script:
+    - cd src/
+    - bash run_message.sh "[FAIL]" "CD STATUS"
+
+notify_error_deploy:
+  stage: notify
+  when: on_success 
+  needs:
+    - job: copy-files
+  script:
+    - cd src/
+    - bash run_message.sh "[OK]" "CD STATUS"
